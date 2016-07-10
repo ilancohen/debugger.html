@@ -4,14 +4,19 @@
 require("babel-register");
 
 const path = require("path");
+const fs = require("fs");
 const webpack = require("webpack");
 const express = require("express");
 const webpackDevMiddleware = require("webpack-dev-middleware");
 const webpackHotMiddleware = require("webpack-hot-middleware");
 const http = require("http");
+const _ = require("lodash");
 
-const projectConfig = require("../webpack.config");
-const getValue = require("../public/js/configs/feature").getValue;
+// Setup Config
+const getConfig = require("../config/config").getConfig;
+const feature = require("../config/feature");
+const config = getConfig();
+feature.setConfig(config);
 
 require("./firefox-proxy");
 
@@ -30,36 +35,18 @@ function httpGet(url, onResponse) {
 const app = express();
 
 // Webpack middleware
-
-const hotReloadingEnabled = getValue("hotReloading");
-
-const config = Object.assign({}, projectConfig, {
-  entry: [path.join(__dirname, "../public/js/main.js")]
-});
-
-if(hotReloadingEnabled) {
-  config.entry.push("webpack-hot-middleware/client");
-
-  config.plugins = config.plugins.concat([
-    new webpack.HotModuleReplacementPlugin(),
-    new webpack.NoErrorsPlugin()
-  ]);
-
-  config.module.loaders.push({
-    test: /\.js$/,
-    include: path.join(__dirname, "../public/js"),
-    loader: "react-hot"
-  });
-}
-
-const compiler = webpack(config);
+const webpackConfig = require("../webpack.config");
+const compiler = webpack(webpackConfig);
 
 app.use(webpackDevMiddleware(compiler, {
-  publicPath: config.output.publicPath,
+  publicPath: webpackConfig.output.publicPath,
   noInfo: true,
   stats: { colors: true }
 }));
-app.use(webpackHotMiddleware(compiler));
+
+if(feature.isEnabled("hotReloading")) {
+  app.use(webpackHotMiddleware(compiler));
+}
 
 // Static middleware
 
@@ -67,27 +54,29 @@ app.use(express.static("public/js/test/examples"));
 app.use(express.static("public"));
 
 // Routes
-
 app.get("/", function(req, res) {
   res.sendFile(path.join(__dirname, "../index.html"));
 });
 
 app.get("/chrome-tabs", function(req, res) {
-  const webSocketPort = getValue("chrome.webSocketPort");
-  const url = `http://localhost:${webSocketPort}/json/list`;
+  if(feature.isEnabled("chrome.debug")) {
+    const webSocketPort = feature.getValue("chrome.webSocketPort");
+    const url = `http://localhost:${webSocketPort}/json/list`;
 
-  const tabRequest = httpGet(url, body => res.json(JSON.parse(body)));
+    const tabRequest = httpGet(url, body => res.json(JSON.parse(body)));
 
-  tabRequest.on('error', function (err) {
-    if (err.code == "ECONNREFUSED") {
-      console.log("Failed to connect to chrome");
-    }
-  });
-
+    tabRequest.on('error', function (err) {
+      if (err.code == "ECONNREFUSED") {
+        console.log("Failed to connect to chrome");
+      }
+    });
+  }
+  else {
+    res.json([]);
+  }
 })
 
 // Listen
-
 app.listen(8000, "localhost", function(err, result) {
   if (err) {
     console.log(err);

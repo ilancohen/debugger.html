@@ -26,7 +26,8 @@ function RightSidebar({ resume, command, breakOnNext,
                         pause, isWaitingOnBreak }) {
   return (
     dom.div(
-      { className: "right-sidebar" },
+      { className: "right-sidebar",
+        style: { overflowX: "hidden" }},
       dom.div(
         { className: "command-bar" },
         pause ? [
@@ -45,9 +46,6 @@ function RightSidebar({ resume, command, breakOnNext,
 
         debugBtn(() => command({ type: "disableBreakpoints" }),
                  "disableBreakpoints", "disabled"),
-        debugBtn(() => command({ type: "blackBox" }), "blackBox", "disabled"),
-        debugBtn(() => command({ type: "prettyPrint" }),
-                 "prettyPrint", "disabled"),
         debugBtn(() => command({ type: "subSettings" }), "subSettings")
       ),
 

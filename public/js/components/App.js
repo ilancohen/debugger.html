@@ -11,6 +11,7 @@ const Editor = createFactory(require("./Editor"));
 const SplitBox = createFactory(require("./SplitBox"));
 const RightSidebar = createFactory(require("./RightSidebar"));
 const SourceTabs = createFactory(require("./SourceTabs"));
+const SourceFooter = createFactory(require("./SourceFooter"));
 const { getSources, getBreakpoints } = require("../selectors");
 
 const App = React.createClass({
@@ -29,9 +30,11 @@ const App = React.createClass({
       right: SplitBox({
         initialWidth: 300,
         rightFlex: true,
-        left: dom.div({ className: "editor-container" },
+        left: dom.div(
+          { className: "editor-container" },
           SourceTabs(),
-          Editor()
+          Editor(),
+          SourceFooter()
         ),
         right: RightSidebar()
       })

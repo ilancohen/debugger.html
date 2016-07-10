@@ -43,7 +43,7 @@ function newSource(source) {
   };
 }
 
-function selectSource(id) {
+function selectSource(id, options = {}) {
   return ({ dispatch, getState, client }) => {
     if (!client) {
       // No connection, do nothing. This happens when the debugger is
@@ -58,7 +58,8 @@ function selectSource(id) {
 
     dispatch({
       type: constants.SELECT_SOURCE,
-      source: source
+      source: source,
+      options
     });
   };
 }
@@ -109,8 +110,9 @@ function blackbox(source, shouldBlackBox) {
  *          A promise that resolves to [aSource, prettyText] or rejects to
  *          [aSource, error].
  */
-function togglePrettyPrint(source) {
+function togglePrettyPrint(id) {
   return ({ dispatch, getState, client }) => {
+    const source = getSource(getState(), id).toJS();
     const wantPretty = !source.isPrettyPrinted;
 
     return dispatch({
